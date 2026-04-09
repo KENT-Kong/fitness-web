@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清空缓存并测试</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>健身网站数据测试</h1>
+    
+    <div>
+        <h3>步骤1：清空缓存</h3>
+        <button onclick="clearCache()">清空localStorage缓存</button>
+        
+        <h3>步骤2：测试数据加载</h3>
+        <button onclick="testData()">测试数据加载</button>
+        
+        <h3>步骤3：打开主网站</h3>
+        <button onclick="openMain()">打开健身网站</button>
+    </div>
+    
+    <div id="result" class="result"></div>
+    
+    <script>
+        function showResult(message, type = 'info') {
+            const el = document.getElementById('result');
+            el.className = `result ${type}`;
+            el.innerHTML = `<h4>${type === 'success' ? '✓' : '⚠️'} 结果</h4><pre>${message}</pre>`;
+        }
+        
+        function clearCache() {
+            try {
+                // 清空所有相关的缓存项
+                localStorage.removeItem('forge-fitness-data');
+                localStorage.removeItem('forge-fitness-last-sync');
+                localStorage.removeItem('fitness-data-v1');
+                localStorage.removeItem('fitness-settings');
+                localStorage.removeItem('fitness-user-preferences');
+                
+                // 创建一个广播频道来通知所有打开的健身页面
+                try {
+                    // 方法1: BroadcastChannel (现代浏览器)
+                    if ('BroadcastChannel' in window) {
+                        const channel = new BroadcastChannel('fitness-cache');
+                        channel.postMessage({ action: 'cache-cleared', timestamp: Date.now() });
+                        channel.close();
+                        console.log('📢 已通过BroadcastChannel广播缓存清空消息');
+                    }
+                    
+                    // 方法2: StorageEvent (跨标签页)
+                    // 创建一个虚拟的StorageEvent来触发其他页面的监听器
+                    window.dispatchEvent(new StorageEvent('storage', {
+                        key: 'forge-fitness-data',
+                        oldValue: 'cache-cleared',
+                        newValue: null,
+                        url: window.location.href,
+                        storageArea: localStorage
+                    }));
+                    
+                    // 方法3: 直接更新localStorage以触发事件
+                    // 设置一个临时值然后立即删除
+                    localStorage.setItem('__cache_clear_trigger', 'true');
+                    localStorage.removeItem('__cache_clear_trigger');
+                    
+                    console.log('✅ 缓存清空通知已发送');
+                } catch (broadcastError) {
+                    console.warn('广播通知失败:', broadcastError);
+                }
+                
+                showResult('✓ localStorage缓存已清空！<br><br>通知已发送给其他打开的页面。<br>如果其他页面没有自动刷新，请：<br>1. 点击下方"测试数据加载"按钮确认data.json可用<br>2. 然后点击"打开健身网站"按钮重新打开', 'success');
+            } catch(e) {
+                showResult('❌ 清空缓存失败: ' + e.message, 'error');
+            }
+        }
+        
+        async function testData() {
+            try {
+                const response = await fetch('/data.json', {cache: 'no-store'});
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                const records = data.records || [];
+                const latest = records[records.length - 1];
+                
+                let result = `✅ 数据加载成功！\n`;
+                result += `总记录数: ${records.length}\n`;
+                result += `最新记录:\n`;
+                result += `  日期: ${latest.date}\n`;
+                result += `  体重: ${latest.weight}kg\n`;
+                result += `  总热量: ${latest.total_cal}\n`;
+                result += `  蛋白质: ${latest.total_protein}g\n`;
+                result += `  碳水: ${latest.total_carb}g\n`;
+                result += `  饮水: ${latest.water}ml\n`;
+                
+                showResult(result, 'success');
+            } catch(e) {
+                showResult('❌ 数据加载失败: ' + e.message, 'error');
+            }
+        }
+        
+        function openMain() {
+            window.open('/', '_blank');
+        }
+    </script>
+</body>
+</html>

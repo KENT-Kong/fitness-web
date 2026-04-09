@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据流测试</title>
+</head>
+<body>
+    <h1>健身数据流测试</h1>
+    
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        async function testDataFlow() {
+            output.innerHTML = '<p>🚀 开始数据流测试...</p>';
+            
+            // 1. 测试 Google Sheets API
+            try {
+                output.innerHTML += '<p>🌐 测试 Google Sheets API...</p>';
+                const apiResponse = await fetch('/api/records', { cache: 'no-store' });
+                output.innerHTML += `<p>Google Sheets 状态: ${apiResponse.status} ${apiResponse.statusText}</p>`;
+                
+                if (apiResponse.ok) {
+                    const data = await apiResponse.json();
+                    output.innerHTML += `<p>✅ Google Sheets 记录数: ${data.length}</p>`;
+                    output.innerHTML += `<p>最新记录: ${JSON.stringify(data[data.length - 1])}</p>`;
+                } else {
+                    output.innerHTML += `<p>❌ Google Sheets 失败: ${apiResponse.status}</p>`;
+                }
+            } catch (error) {
+                output.innerHTML += `<p>❌ Google Sheets 错误: ${error.message}</p>`;
+            }
+            
+            // 2. 测试 data.json
+            try {
+                output.innerHTML += '<p>📦 测试 data.json...</p>';
+                const jsonResponse = await fetch('data.json', { cache: 'no-store' });
+                output.innerHTML += `<p>data.json 状态: ${jsonResponse.status} ${jsonResponse.statusText}</p>`;
+                
+                if (jsonResponse.ok) {
+                    const data = await jsonResponse.json();
+                    output.innerHTML += `<p>✅ data.json 记录数: ${data.length}</p>`;
+                    const latest = data[data.length - 1];
+                    output.innerHTML += `<p>最新记录 (${latest.date}): 体重=${latest.weight}kg</p>`;
+                    
+                    // 保存到 localStorage 用于测试
+                    localStorage.setItem('forge-fitness-data', JSON.stringify(data));
+                    output.innerHTML += `<p>💾 已保存到 localStorage</p>`;
+                } else {
+                    output.innerHTML += `<p>❌ data.json 失败: ${jsonResponse.status}</p>`;
+                }
+            } catch (error) {
+                output.innerHTML += `<p>❌ data.json 错误: ${error.message}</p>`;
+            }
+            
+            // 3. 测试 localStorage
+            try {
+                output.innerHTML += '<p>💾 测试 localStorage...</p>';
+                const saved = localStorage.getItem('forge-fitness-data');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    output.innerHTML += `<p>✅ localStorage 记录数: ${data.length}</p>`;
+                    const latest = data[data.length - 1];
+                    output.innerHTML += `<p>缓存最新记录 (${latest.date}): 体重=${latest.weight}kg</p>`;
+                } else {
+                    output.innerHTML += `<p>❌ localStorage 为空</p>`;
+                }
+            } catch (error) {
+                output.innerHTML += `<p>❌ localStorage 错误: ${error.message}</p>`;
+            }
+            
+            output.innerHTML += '<p>✅ 测试完成！</p>';
+        }
+        
+        testDataFlow();
+    </script>
+</body>
+</html>

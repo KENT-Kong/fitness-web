@@ -1,0 +1,36 @@
+{
+  "name": "fitness-web",
+  "version": "1.0.0",
+  "description": "智能健身记录系统 - Google Sheets云端同步 + AI助手",
+  "main": "server.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.102.1",
+    "axios": "^1.14.0",
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.6.1",
+    "exceljs": "^4.4.0",
+    "googleapis": "^128.0.0",
+    "node-fetch": "^3.3.2",
+    "xlsx-style": "^0.8.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test:sheets": "node test-google-sheets.js",
+    "setup:env": "copy .env.example .env",
+    "backup:data": "node scripts/backup-data.js"
+  },
+  "keywords": [
+    "fitness",
+    "tracker",
+    "google-sheets",
+    "ai",
+    "health"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

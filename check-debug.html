@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Fitness Data</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>健身数据调试</h1>
+    <div id="result"></div>
+    <script>
+        async function checkData() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // 1. 检查data.json
+                const response = await fetch('data.json', { cache: 'no-store' });
+                const data = await response.json();
+                const latest = data[data.length - 1];
+                
+                resultDiv.innerHTML += `<h3>1. data.json 最新记录</h3>`;
+                resultDiv.innerHTML += `<pre>${JSON.stringify(latest, null, 2)}</pre>`;
+                resultDiv.innerHTML += `<p>体重: ${latest.weight}kg</p>`;
+                
+                // 2. 检查API
+                try {
+                    const apiResponse = await fetch('/api/records', { cache: 'no-store' });
+                    if (apiResponse.ok) {
+                        const apiData = await apiResponse.json();
+                        const apiLatest = apiData[apiData.length - 1];
+                        resultDiv.innerHTML += `<h3>2. API 最新记录</h3>`;
+                        resultDiv.innerHTML += `<pre>${JSON.stringify(apiLatest, null, 2)}</pre>`;
+                        resultDiv.innerHTML += `<p>体重: ${apiLatest.weight}kg</p>`;
+                    } else {
+                        resultDiv.innerHTML += `<h3>2. API 不可用 (${apiResponse.status})</h3>`;
+                    }
+                } catch (apiError) {
+                    resultDiv.innerHTML += `<h3>2. API 错误: ${apiError.message}</h3>`;
+                }
+                
+                // 3. 检查localStorage
+                const saved = localStorage.getItem('forge-fitness-data');
+                if (saved) {
+                    const localData = JSON.parse(saved);
+                    const localLatest = localData[localData.length - 1];
+                    resultDiv.innerHTML += `<h3>3. localStorage 最新记录</h3>`;
+                    resultDiv.innerHTML += `<pre>${JSON.stringify(localLatest, null, 2)}</pre>`;
+                    resultDiv.innerHTML += `<p>体重: ${localLatest.weight}kg</p>`;
+                } else {
+                    resultDiv.innerHTML += `<h3>3. localStorage 无数据</h3>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color:red">错误: ${error.message}</p>`;
+            }
+        }
+        
+        checkData();
+    </script>
+</body>
+</html>
