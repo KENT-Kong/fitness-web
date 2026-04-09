@@ -17,7 +17,7 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="zh_CN">
 <script src="lib/chart.umd.min.js"></script>
-<script src="lib/xlsx.full.min.js"></script>
+<script src="lib/xlsx-style.full.min.js"></script>
 <style>
 /* ========== CSS Variables ========== */
 :root {
@@ -5839,7 +5839,8 @@ function exportExcel() {
       r.total_cal, r.total_burn, r.total_protein, r.total_carb, r.water, r.sleep, r.sleep_quality]);
   });
   
-  const wb = XLSX.utils.book_new();
+  // 创建工作簿 - xlsx-style兼容方式
+  const wb = { SheetNames: [], Sheets: {} };
   const ws = XLSX.utils.aoa_to_sheet(ws_data);
   
   // 设置列宽
@@ -5914,8 +5915,30 @@ function exportExcel() {
   // 冻结首行
   ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
   
-  XLSX.utils.book_append_sheet(wb, ws, '健身记录');
-  XLSX.writeFile(wb, `健身记录_${new Date().toISOString().slice(0,10)}.xlsx`);
+  // 添加工作表并导出 - xlsx-style兼容方式
+  wb.SheetNames.push('健身记录');
+  wb.Sheets['健身记录'] = ws;
+  
+  // 使用xlsx-style的write方法
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+  
+  // 转换为Blob并下载
+  function s2ab(s) {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+    return buf;
+  }
+  
+  const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `健身记录_${new Date().toISOString().slice(0,10)}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
   showToast('📊 Excel已导出');
 }
 
