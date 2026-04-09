@@ -4687,6 +4687,17 @@ function renderDetail() {
     document.getElementById('nutrition-summary').innerHTML = '';
     if (charts.nutritionPie) { charts.nutritionPie.destroy(); charts.nutritionPie = null; }
     
+    // 重置热量缺口卡片 - 防止显示旧数据
+    document.getElementById('calorie-intake').textContent = '0';
+    document.getElementById('calorie-burn').textContent = '0';
+    document.getElementById('calorie-deficit').textContent = '0';
+    document.getElementById('calorie-target').textContent = '—';
+    document.getElementById('calorie-target-sub').textContent = '需设置起始/目标/日期';
+    document.getElementById('deficit-status').textContent = '无数据';
+    document.getElementById('deficit-status').style.background = 'var(--text-muted)';
+    document.getElementById('deficit-message').textContent = '当天暂无记录';
+    document.getElementById('deficit-message').style.color = 'var(--text-muted)';
+    
     // 运动卡片：渲染可操作的空状态（包含录入按钮）
     document.getElementById('detail-exercise').innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -6151,6 +6162,8 @@ function getGoal() {
   const dynamicBMR = Math.round(370 + 21.6 * leanMass);
   return {
     ...g,
+    startWeight: g.startWeight || (records.length > 0 ? records[0].weight : lastWeight),
+    startDate: g.startDate || (records.length > 0 ? records[0].date : ''),
     targetWeight: g.targetWeight || 80,
     targetDate: g.targetDate || '2026-06-30',
     dailyCal: g.dailyCal || 1800,
@@ -6164,6 +6177,7 @@ function getGoal() {
     water: g.water || 3000,
     bodyFat: bodyFat,
     bmr: g.bmr || dynamicBMR,
+    lastWeight: lastWeight,
     // Legacy compat
     protein: g.protein || g.proteinMin || 120,
     fat: g.fat || g.fatMax || 50,
